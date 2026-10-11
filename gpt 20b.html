@@ -198,17 +198,25 @@
   });
 
   //Typewriter effect for the initial bot message
-  function typeWriterEffect(element, htmlContent, speed = 10){
-    let i = 0;
-    element.innerHTML = "";
+  function typeWriterEffect(element, htmlContent, speed = 5){
+    element.innerHTML = '';
+    const finalHTML = parseMessageWithMath(htmlContent);
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = finalHTML;
+    const fullText = tempDiv.textContent;
+
+    let charIndex = 0;
+
+    const textSpan = document.createElement('span');
+    element.appendChild(textSpan);
 
     let timer = setInterval(() => {
-      if (i < htmlContent.length) {
-        element.innerHTML += htmlContent.charAt(i);
-        i++;
+      if (charIndex < fullText.length) {
+        textSpan.textContent += fullText.charAt(charIndex);
+        charIndex++;
       } else {
         clearInterval(timer);
-        element.innerHTML = parseMessageWithMath(htmlContent);
+        // After typing, render math
         if (typeof renderMathInElement !== 'undefined') {
           renderMathInElement(element, {
             delimiters: [
@@ -253,7 +261,7 @@
         const botReply = data.choices[0].message.content;
         
         // Pass to typewriter effect (change '15' to adjust typing speed)
-        typeWriterEffect(loadingDiv, botReply, 15);
+        typeWriterEffect(loadingDiv, botReply, 5);
 
         conversationHistory.push({ role: "assistant", content: botReply });
       } else {
