@@ -156,7 +156,7 @@
   const sendBtn = document.getElementById('send-btn');
 
   const conversationHistory = [
-    { role: "system", content: "You are a helpful, knowledgeable, and friendly assistant designed to answer questions across a variety of subjects, including Science, History, Math, Literature, and General Knowledge. When writing mathematical expressions or fractions, always use single dollar signs for inline math (e.g. $\\frac{a}{b}$) and double dollar signs for block math." }
+    { role: "system", content: "You are a helpful, knowledgeable, and friendly assistant. Always structure your responses using rich Markdown formatting: use bold headers (###), bullet points, markdown tables for lists/timelines, and horizontal rules (---) to separate sections. When writing mathematical expressions or fractions, always use single dollar signs for inline math (e.g. $\\frac{a}{b}$) and double dollar signs for block math." }
   ];
 
   // Helper function using safe @@ symbols to protect math from Marked.js
