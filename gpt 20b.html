@@ -252,17 +252,8 @@
       if (data.choices && data.choices.length > 0) {
         const botReply = data.choices[0].message.content;
         
-        loadingDiv.innerHTML = parseMessageWithMath(botReply);
-        
-        if (typeof renderMathInElement !== 'undefined') {
-          renderMathInElement(loadingDiv, {
-            delimiters: [
-              {left: "$$", right: "$$", display: true},
-              {left: "$", right: "$", display: false}
-            ],
-            throwOnError: false
-          });
-        }
+        // Pass to typewriter effect (change '15' to adjust typing speed)
+        typeWriterEffect(loadingDiv, botReply, 15);
 
         conversationHistory.push({ role: "assistant", content: botReply });
       } else {
