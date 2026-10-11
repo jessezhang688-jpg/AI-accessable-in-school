@@ -38,14 +38,6 @@
       gap: 8px;
     }
 
-    .msg {
-      max-width: 80%;
-      padding: 8px 12px;
-      border-radius: 12px;
-      font-size: 14px;
-      line-height: 1.4;
-    }
-
     /* Markdown Styling Inside Chat Bubbles */
     .msg p {
       margin: 0 0 8px 0;
@@ -113,8 +105,9 @@
     #send-btn:disabled {
       background: #ccc;
     }
-    /*loading spinner*/
-    .spinner{
+
+    /* Loading Spinner Animation */
+    .spinner {
       display: inline-block;
       width: 14px;
       height: 14px;
@@ -130,12 +123,12 @@
       to { transform: rotate(360deg); }
     }
 
-    @keyframes messageSlideIn{
+    @keyframes messageSlideIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .msg{
+    .msg {
       max-width: 80%;
       padding: 8px 12px;
       border-radius: 12px;
@@ -215,8 +208,8 @@
     userInput.disabled = true;
     sendBtn.disabled = true;
 
-    // Show loading state
-    const loadingDiv = addMessage("Thinking...", 'bot');
+    // Show loading state with spinner
+    const loadingDiv = addMessage('<span class="spinner"></span>Thinking...', 'bot');
 
     try {
       const response = await fetch("https://script.google.com/macros/s/AKfycbwD8gl-qLpvmU5Y_FPPRlgTaIKGX5PEyLY-veIlM__ceGFKeJF3aGQsFOuiExA5gA/exec", {
@@ -236,15 +229,16 @@
         
         loadingDiv.innerHTML = parseMessageWithMath(botReply);
         
-        renderMathInElement(loadingDiv, {
-          delimiters: [
-            {left: "$$", right: "$$", display: true},
-            {left: "$", right: "$", display: false}
-          ],
-          throwOnError: false
-        });
+        if (typeof renderMathInElement !== 'undefined') {
+          renderMathInElement(loadingDiv, {
+            delimiters: [
+              {left: "$$", right: "$$", display: true},
+              {left: "$", right: "$", display: false}
+            ],
+            throwOnError: false
+          });
+        }
 
-        // Correctly inside the scope block
         conversationHistory.push({ role: "assistant", content: botReply });
       } else {
         loadingDiv.textContent = "Error: Invalid response, try again later.";
