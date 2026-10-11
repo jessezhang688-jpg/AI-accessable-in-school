@@ -160,6 +160,7 @@
   ];
 
   // Helper function using safe @@ symbols to protect math from Marked.js
+  // Helper function using safe @@ symbols to protect math from Marked.js
   function parseMessageWithMath(text) {
     const mathBlocks = [];
     let protectedText = text.replace(/(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$)/g, (match) => {
@@ -174,6 +175,44 @@
     });
 
     return parsedHTML;
+  }
+
+  // Typewriter effect for bot messages
+  function typeWriterEffect(element, htmlContent, speed = 5){
+    element.innerHTML = '';
+    const finalHTML = parseMessageWithMath(htmlContent);
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = finalHTML;
+    const fullText = tempDiv.textContent;
+
+    let charIndex = 0;
+
+    const textSpan = document.createElement('span');
+    element.appendChild(textSpan);
+
+    let timer = setInterval(() => {
+      if (charIndex < fullText.length) {
+        textSpan.textContent += fullText.charAt(charIndex);
+        charIndex++;
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      } else {
+        clearInterval(timer);
+        
+        // FIX: Once typing finishes, swap to the fully parsed HTML with markdown/tables/math!
+        element.innerHTML = finalHTML;
+
+        if (typeof renderMathInElement !== 'undefined') {
+          renderMathInElement(element, {
+            delimiters: [
+              {left: "$$", right: "$$", display: true},
+              {left: "$", right: "$", display: false}
+            ],
+            throwOnError: false
+          });
+        }
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+    }, speed);
   }
 
   // Stealth Panic Key (Esc) for Embedded Google Sites
@@ -197,38 +236,6 @@
     }
   });
 
-  //Typewriter effect for the initial bot message
-  function typeWriterEffect(element, htmlContent, speed = 5){
-    element.innerHTML = '';
-    const finalHTML = parseMessageWithMath(htmlContent);
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = finalHTML;
-    const fullText = tempDiv.textContent;
-
-    let charIndex = 0;
-
-    const textSpan = document.createElement('span');
-    element.appendChild(textSpan);
-
-    let timer = setInterval(() => {
-      if (charIndex < fullText.length) {
-        textSpan.textContent += fullText.charAt(charIndex);
-        charIndex++;
-      } else {
-        clearInterval(timer);
-        // After typing, render math
-        if (typeof renderMathInElement !== 'undefined') {
-          renderMathInElement(element, {
-            delimiters: [
-              {left: "$$", right: "$$", display: true},
-              {left: "$", right: "$", display: false}
-            ],
-            throwOnError: false
-          });
-        }
-      }
-    }, speed);
-  }
 
   async function sendMessage() {
     const text = userInput.value.trim();
