@@ -4,15 +4,6 @@
   <meta charset="UTF-8">
   <!-- 1. Include Marked.js -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  
-  <!-- 2. Include KaTeX CSS and JS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-  
-  <!-- 3. Include KaTeX Auto-Render Extension -->
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
-
- 
   <style>
     /* Force body and html to fill the entire embedded frame without scrollbars */
     html, body {
@@ -210,7 +201,8 @@
     userInput.disabled = true;
     sendBtn.disabled = true;
 
-    const loadingDiv = addMessage('<span class="spinner"></span>Thinking...', 'bot');
+    // Show loading state
+    const loadingDiv = addMessage("Thinking...", 'bot');
 
     try {
       const response = await fetch("https://script.google.com/macros/s/AKfycbwD8gl-qLpvmU5Y_FPPRlgTaIKGX5PEyLY-veIlM__ceGFKeJF3aGQsFOuiExA5gA/exec", {
