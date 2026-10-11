@@ -178,41 +178,37 @@
   }
 
   // Typewriter effect for bot messages
-  function typeWriterEffect(element, htmlContent, speed = 5){
+  // Smooth fade-in stream effect for bot messages (prevents raw LaTeX code flashing)
+  function typeWriterEffect(element, htmlContent, speed = 5) {
     element.innerHTML = '';
+    
+    // 1. Fully parse markdown and math immediately into final HTML
     const finalHTML = parseMessageWithMath(htmlContent);
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = finalHTML;
-    const fullText = tempDiv.textContent;
+    element.innerHTML = finalHTML;
 
-    let charIndex = 0;
+    // 2. Render KaTeX math instantly so equations look correct right away
+    if (typeof renderMathInElement !== 'undefined') {
+      renderMathInElement(element, {
+        delimiters: [
+          {left: "$$", right: "$$", display: true},
+          {left: "$", right: "$", display: false}
+        ],
+        throwOnError: false
+      });
+    }
 
-    const textSpan = document.createElement('span');
-    element.appendChild(textSpan);
+    // 3. Smooth fade-in stream animation for the whole message block
+    element.style.opacity = 0;
+    element.style.transform = 'translateY(6px)';
+    element.style.transition = 'opacity 0.4s ease-out, transform 0.4s ease-out';
+    
+    // Trigger transition on next frame
+    requestAnimationFrame(() => {
+      element.style.opacity = 1;
+      element.style.transform = 'translateY(0)';
+    });
 
-    let timer = setInterval(() => {
-      if (charIndex < fullText.length) {
-        textSpan.textContent += fullText.charAt(charIndex);
-        charIndex++;
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      } else {
-        clearInterval(timer);
-        
-        // FIX: Once typing finishes, swap to the fully parsed HTML with markdown/tables/math!
-        element.innerHTML = finalHTML;
-
-        if (typeof renderMathInElement !== 'undefined') {
-          renderMathInElement(element, {
-            delimiters: [
-              {left: "$$", right: "$$", display: true},
-              {left: "$", right: "$", display: false}
-            ],
-            throwOnError: false
-          });
-        }
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      }
-    }, speed);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }
 
   // Stealth Panic Key (Esc) for Embedded Google Sites
