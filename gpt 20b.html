@@ -197,34 +197,38 @@
     return parsedHTML;
   }
 
-  // Dynamic box-expanding stream effect (appends block-by-block so height grows smoothly)
-  // Line-by-line / paragraph-by-paragraph expanding stream effect
+  // Progressive box-expanding effect (appends blocks one-by-one so height grows smoothly)
   function typeWriterEffect(element, htmlContent) {
     element.innerHTML = '';
     
     // Split the raw response into individual paragraphs/blocks by double newlines
-    const rawParagraphs = htmlContent.split(/\n\n+/);
+    const rawParagraphs = htmlContent.split(/\n\n+/).filter(p => p.trim() !== '');
     
+    if (rawParagraphs.length === 0) {
+      element.innerHTML = parseMessageWithMath(htmlContent);
+      return;
+    }
+
     rawParagraphs.forEach((paraText, index) => {
-      if (!paraText.trim()) return;
-
-      // Parse each paragraph independently with Markdown and Math support
-      const parsedParaHTML = parseMessageWithMath(paraText);
-      
-      const pWrapper = document.createElement('div');
-      pWrapper.innerHTML = parsedParaHTML;
-      pWrapper.style.opacity = '0';
-      pWrapper.style.transform = 'translateY(8px)';
-      pWrapper.style.transition = 'opacity 0.35s ease-out, transform 0.35s ease-out';
-      pWrapper.style.marginBottom = '8px';
-      
-      element.appendChild(pWrapper);
-
-      // Stagger each block by 120ms so the box expands downwards line-by-line
+      // Delay both creation and appending so the chat bubble physically grows downwards
       setTimeout(() => {
-        pWrapper.style.opacity = '1';
-        pWrapper.style.transform = 'translateY(0)';
+        const parsedParaHTML = parseMessageWithMath(paraText);
         
+        const pWrapper = document.createElement('div');
+        pWrapper.innerHTML = parsedParaHTML;
+        pWrapper.style.opacity = '0';
+        pWrapper.style.transform = 'translateY(8px)';
+        pWrapper.style.transition = 'opacity 0.35s ease-out, transform 0.35s ease-out';
+        pWrapper.style.marginBottom = '8px';
+        
+        // Append only when its turn arrives in the timeline
+        element.appendChild(pWrapper);
+        
+        requestAnimationFrame(() => {
+          pWrapper.style.opacity = '1';
+          pWrapper.style.transform = 'translateY(0)';
+        });
+
         // Render KaTeX math inside this specific paragraph block as it appears
         if (typeof renderMathInElement !== 'undefined') {
           renderMathInElement(pWrapper, {
@@ -236,11 +240,9 @@
           });
         }
 
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      }, index * 120);
+        messagesContainer.scrollTop = messagesContainer.scrollTopMax || messagesContainer.scrollHeight;
+      }, index * 150); // Stagger each block by 150ms
     });
-
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }
 
   // Stealth Panic Key (Esc) for Embedded Google Sites
