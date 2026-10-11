@@ -4,6 +4,14 @@
   <meta charset="UTF-8">
   <!-- 1. Include Marked.js -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  
+  <!-- 2. Include KaTeX CSS and JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  
+  <!-- 3. Include KaTeX Auto-Render Extension -->
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
   <style>
     /* Force body and html to fill the entire embedded frame without scrollbars */
     html, body {
@@ -160,7 +168,6 @@
   ];
 
   // Helper function using safe @@ symbols to protect math from Marked.js
-  // Helper function using safe @@ symbols to protect math from Marked.js
   function parseMessageWithMath(text) {
     const mathBlocks = [];
     let protectedText = text.replace(/(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$)/g, (match) => {
@@ -177,16 +184,12 @@
     return parsedHTML;
   }
 
-  // Typewriter effect for bot messages
-  // Smooth fade-in stream effect for bot messages (prevents raw LaTeX code flashing)
-  function typeWriterEffect(element, htmlContent, speed = 5) {
+  // Smooth appearance effect for bot messages
+  function typeWriterEffect(element, htmlContent) {
     element.innerHTML = '';
-    
-    // 1. Fully parse markdown and math immediately into final HTML
     const finalHTML = parseMessageWithMath(htmlContent);
     element.innerHTML = finalHTML;
 
-    // 2. Render KaTeX math instantly so equations look correct right away
     if (typeof renderMathInElement !== 'undefined') {
       renderMathInElement(element, {
         delimiters: [
@@ -197,12 +200,10 @@
       });
     }
 
-    // 3. Smooth fade-in stream animation for the whole message block
     element.style.opacity = 0;
     element.style.transform = 'translateY(6px)';
     element.style.transition = 'opacity 0.4s ease-out, transform 0.4s ease-out';
     
-    // Trigger transition on next frame
     requestAnimationFrame(() => {
       element.style.opacity = 1;
       element.style.transform = 'translateY(0)';
@@ -232,7 +233,6 @@
     }
   });
 
-
   async function sendMessage() {
     const text = userInput.value.trim();
     if (!text) return;
@@ -244,7 +244,6 @@
     userInput.disabled = true;
     sendBtn.disabled = true;
 
-    // Show loading state with spinner
     const loadingDiv = addMessage('<span class="spinner"></span>Thinking...', 'bot');
 
     try {
@@ -262,10 +261,7 @@
       
       if (data.choices && data.choices.length > 0) {
         const botReply = data.choices[0].message.content;
-        
-        // Pass to typewriter effect (change '15' to adjust typing speed)
-        typeWriterEffect(loadingDiv, botReply, 5);
-
+        typeWriterEffect(loadingDiv, botReply);
         conversationHistory.push({ role: "assistant", content: botReply });
       } else {
         loadingDiv.textContent = "Error: Invalid response, try again later.";
