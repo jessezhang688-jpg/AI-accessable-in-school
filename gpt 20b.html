@@ -71,6 +71,19 @@
       margin: 4px 0;
       padding-left: 20px;
     }
+    .msg table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0;
+    }
+    .msg th, .msg td {
+      border: 1px solid #ccc;
+      padding: 6px 8px;
+      font-size: 13px;
+    }
+    .msg th {
+      background: rgba(0, 0, 0, 0.05);
+    }
 
     .user {
       align-self: flex-end;
@@ -184,29 +197,47 @@
     return parsedHTML;
   }
 
-  // Smooth appearance effect for bot messages
+  // Dynamic box-expanding stream effect (appends block-by-block so height grows smoothly)
+  // Line-by-line / paragraph-by-paragraph expanding stream effect
   function typeWriterEffect(element, htmlContent) {
     element.innerHTML = '';
-    const finalHTML = parseMessageWithMath(htmlContent);
-    element.innerHTML = finalHTML;
-
-    if (typeof renderMathInElement !== 'undefined') {
-      renderMathInElement(element, {
-        delimiters: [
-          {left: "$$", right: "$$", display: true},
-          {left: "$", right: "$", display: false}
-        ],
-        throwOnError: false
-      });
-    }
-
-    element.style.opacity = 0;
-    element.style.transform = 'translateY(6px)';
-    element.style.transition = 'opacity 0.4s ease-out, transform 0.4s ease-out';
     
-    requestAnimationFrame(() => {
-      element.style.opacity = 1;
-      element.style.transform = 'translateY(0)';
+    // Split the raw response into individual paragraphs/blocks by double newlines
+    const rawParagraphs = htmlContent.split(/\n\n+/);
+    
+    rawParagraphs.forEach((paraText, index) => {
+      if (!paraText.trim()) return;
+
+      // Parse each paragraph independently with Markdown and Math support
+      const parsedParaHTML = parseMessageWithMath(paraText);
+      
+      const pWrapper = document.createElement('div');
+      pWrapper.innerHTML = parsedParaHTML;
+      pWrapper.style.opacity = '0';
+      pWrapper.style.transform = 'translateY(8px)';
+      pWrapper.style.transition = 'opacity 0.35s ease-out, transform 0.35s ease-out';
+      pWrapper.style.marginBottom = '8px';
+      
+      element.appendChild(pWrapper);
+
+      // Stagger each block by 120ms so the box expands downwards line-by-line
+      setTimeout(() => {
+        pWrapper.style.opacity = '1';
+        pWrapper.style.transform = 'translateY(0)';
+        
+        // Render KaTeX math inside this specific paragraph block as it appears
+        if (typeof renderMathInElement !== 'undefined') {
+          renderMathInElement(pWrapper, {
+            delimiters: [
+              {left: "$$", right: "$$", display: true},
+              {left: "$", right: "$", display: false}
+            ],
+            throwOnError: false
+          });
+        }
+
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }, index * 120);
     });
 
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
