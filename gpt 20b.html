@@ -1,4 +1,3 @@
-//update plan: add light/dark mode toggle button, add a "clear chat" button, and add a "download chat" button. Also, make the chat bubbles more visually appealing with subtle shadows and rounded corners.
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,6 +13,11 @@
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 
   <style>
+    /* Smooth transition animation for theme switching */
+    body, #chat-container, #header-bar, #input-area, #user-input, .msg {
+      transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+    }
+
     /* Force body and html to fill the entire embedded frame without scrollbars */
     html, body {
       height: 100%;
@@ -22,7 +26,8 @@
       padding: 0;
       box-sizing: border-box;
       font-family: Arial, sans-serif;
-      background-color: #f4f4f9;
+      background-color: var(--bg-color);
+      color: var(--text-color);
       overflow: hidden;
     }
 
@@ -35,7 +40,7 @@
       flex-direction: column;
       height: 100vh;
       width: 100vw;
-      background: white;
+      background: var(--chat-bg);
     }
 
     #messages {
@@ -78,7 +83,7 @@
       margin: 8px 0;
     }
     .msg th, .msg td {
-      border: 1px solid #ccc;
+      border: 1px solid var(--border-color);
       padding: 6px 8px;
       font-size: 13px;
     }
@@ -88,29 +93,31 @@
 
     .user {
       align-self: flex-end;
-      background: #007bff;
-      color: white;
+      background: var(--user-bg);
+      color: var(--user-text);
     }
 
     .bot {
       align-self: flex-start;
-      background: #e9ecef;
-      color: #333;
+      background: var(--bot-bg);
+      color: var(--bot-text);
     }
 
     #input-area {
       display: flex;
-      border-top: 1px solid #ccc;
+      border-top: 1px solid var(--border-color);
       padding: 8px;
-      background: #fff;
+      background: var(--chat-bg);
     }
 
     #user-input {
       flex: 1;
       padding: 10px;
-      border: 1px solid #ccc;
+      border: 1px solid var(--input-border);
       border-radius: 4px;
       font-size: 14px;
+      background: var(--input-bg);
+      color: var(--text-color);
     }
 
     #send-btn {
@@ -158,11 +165,90 @@
       line-height: 1.4;
       animation: messageSlideIn 0.3s ease-out forwards;
     }
+
+    /* Theme Variables */
+    :root {
+      --bg-color: #f4f4f9;
+      --chat-bg: #ffffff;
+      --text-color: #333333;
+      --bot-bg: #e9ecef;
+      --bot-text: #333333;
+      --user-bg: #007bff;
+      --user-text: #ffffff;
+      --input-bg: #ffffff;
+      --input-border: #cccccc;
+      --border-color: #cccccc;
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #1e1e1e;
+      --chat-bg: #2c2c2c;
+      --text-color: #f4f4f4;
+      --bot-bg: #2c2c2c;
+      --bot-text: #f4f4f4;
+      --user-bg: #0056b3;
+      --user-text: #ffffff;
+      --input-bg: #2c2c2c;
+      --input-border: #555555;
+      --border-color: #555555;
+    }
+
+    #header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border-color);
+      font-weight: bold;
+      font-size: 15px;
+    }
+
+    .theme-switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+    }
+    .theme-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      transition: .3s;
+      border-radius: 22px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px; width: 16px;
+      left: 3px; bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #007bff;
+    }
+    input:checked + .slider:before {
+      transform: translateX(18px);
+    }
   </style>
 </head>
 <body>
 
 <div id="chat-container">
+  <div id="header-bar">
+    <span>AI Chat</span>
+    <label class="theme-switch">
+      <input type="checkbox" id="theme-toggle" onchange="toggleTheme()">
+      <span class="slider"></span>
+    </label>
+  </div>
   <div id="messages">
     <div class="msg bot">Hello! Ask me anything!</div>
   </div>
@@ -181,7 +267,6 @@
     { role: "system", content: "You are a helpful, knowledgeable, and friendly assistant. Always structure your responses using rich Markdown formatting: use bold headers (###), bullet points, markdown tables for lists/timelines, and horizontal rules (---) to separate sections. When writing mathematical expressions or fractions, always use single dollar signs for inline math (e.g. $\\frac{a}{b}$) and double dollar signs for block math." }
   ];
 
-  // Helper function using safe @@ symbols to protect math from Marked.js
   function parseMessageWithMath(text) {
     const mathBlocks = [];
     let protectedText = text.replace(/(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$)/g, (match) => {
@@ -198,41 +283,29 @@
     return parsedHTML;
   }
 
-  // Progressive box-expanding effect (appends blocks one-by-one so height grows smoothly)
-  function typeWriterEffect(element, htmlContent) {
-    element.innerHTML = '';
+  function typeWriterEffect(element, htmlContent, speed = 3) {
+    element.innerHTML = "";
     
-    // Split the raw response into individual paragraphs/blocks by double newlines
-    const rawParagraphs = htmlContent.split(/\n\n+/).filter(p => p.trim() !== '');
+    const finalHTML = parseMessageWithMath(htmlContent);
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = finalHTML;
+    const fullText = tempDiv.textContent;
     
-    if (rawParagraphs.length === 0) {
-      element.innerHTML = parseMessageWithMath(htmlContent);
-      return;
-    }
-
-    rawParagraphs.forEach((paraText, index) => {
-      // Delay both creation and appending so the chat bubble physically grows downwards
-      setTimeout(() => {
-        const parsedParaHTML = parseMessageWithMath(paraText);
+    let charIndex = 0;
+    const textSpan = document.createElement('span');
+    element.appendChild(textSpan);
+    
+    let timer = setInterval(() => {
+      if (charIndex < fullText.length) {
+        textSpan.textContent += fullText.charAt(charIndex);
+        charIndex++;
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      } else {
+        clearInterval(timer);
+        element.innerHTML = finalHTML;
         
-        const pWrapper = document.createElement('div');
-        pWrapper.innerHTML = parsedParaHTML;
-        pWrapper.style.opacity = '0';
-        pWrapper.style.transform = 'translateY(8px)';
-        pWrapper.style.transition = 'opacity 0.35s ease-out, transform 0.35s ease-out';
-        pWrapper.style.marginBottom = '8px';
-        
-        // Append only when its turn arrives in the timeline
-        element.appendChild(pWrapper);
-        
-        requestAnimationFrame(() => {
-          pWrapper.style.opacity = '1';
-          pWrapper.style.transform = 'translateY(0)';
-        });
-
-        // Render KaTeX math inside this specific paragraph block as it appears
         if (typeof renderMathInElement !== 'undefined') {
-          renderMathInElement(pWrapper, {
+          renderMathInElement(element, {
             delimiters: [
               {left: "$$", right: "$$", display: true},
               {left: "$", right: "$", display: false}
@@ -240,13 +313,30 @@
             throwOnError: false
           });
         }
-
-        messagesContainer.scrollTop = messagesContainer.scrollTopMax || messagesContainer.scrollHeight;
-      }, index * 150); // Stagger each block by 150ms
-    });
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+    }, speed);
   }
 
-  // Stealth Panic Key (Esc) for Embedded Google Sites
+  function toggleTheme() {
+    const isDark = document.getElementById('theme-toggle').checked;
+    if (isDark) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light');
+      localStorage.setItem('theme', 'light');
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.getElementById('theme-toggle').checked = true;
+    }
+  });
+
   document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
       const link = document.createElement('a');
@@ -295,7 +385,7 @@
       
       if (data.choices && data.choices.length > 0) {
         const botReply = data.choices[0].message.content;
-        typeWriterEffect(loadingDiv, botReply);
+        typeWriterEffect(loadingDiv, botReply, 3);
         conversationHistory.push({ role: "assistant", content: botReply });
       } else {
         loadingDiv.textContent = "Error: Invalid response, try again later.";
