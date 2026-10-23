@@ -135,6 +135,22 @@
       background: #ccc;
     }
 
+    #save-btn {
+      margin-left: 6px;
+      padding: 10px 14px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+
+    #save-btn:hover {
+      background: #218838;
+    }
+
     /* Loading Spinner Animation */
     .spinner {
       display: inline-block;
@@ -152,18 +168,30 @@
       to { transform: rotate(360deg); }
     }
 
-    @keyframes messageSlideIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* Flowing background entrance animation for message elements */
+    @keyframes flowIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.98);
+        filter: blur(4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+      }
+    }
+
+    .flow-block {
+      animation: flowIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
     .msg {
       max-width: 80%;
-      padding: 8px 12px;
+      padding: 10px 14px;
       border-radius: 12px;
       font-size: 14px;
       line-height: 1.4;
-      animation: messageSlideIn 0.3s ease-out forwards;
     }
 
     /* Theme Variables */
@@ -253,22 +281,6 @@
       transition: opacity 0.3s ease, transform 0.3s ease;
       display: inline-block;
     }
-
-    #save-btn {
-      margin-left: 6px;
-      padding: 10px 18px;
-      background: #28a745;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background 0.3s ease;
-    }
-
-    #save-btn:hover {
-      background: #218838;
-    }
   </style>
 </head>
 <body>
@@ -285,12 +297,12 @@
     </div>
   </div>
   <div id="messages">
-    <div class="msg bot">Hello! Ask me anything!</div>
+    <div class="msg bot flow-block">Hello! Ask me anything!</div>
   </div>
   <div id="input-area">
     <input type="text" id="user-input" placeholder="Type a message..." />
     <button id="send-btn" onclick="sendMessage()">Send</button>
-    <button id="save-btn" onclick="saveChatHistory()">Save Chat</button>
+    <button id="save-btn" onclick="saveChatHistory()" title="Save Chat History">💾 Save</button>
   </div>
 </div>
 
@@ -319,29 +331,32 @@
     return parsedHTML;
   }
 
-  function typeWriterEffect(element, htmlContent, speed = 3) {
+  // Flow-in effect with live KaTeX rendering per chunk
+  function flowInEffect(element, htmlContent) {
     element.innerHTML = "";
     
-    const finalHTML = parseMessageWithMath(htmlContent);
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = finalHTML;
-    const fullText = tempDiv.textContent;
+    // Split the raw response into paragraph blocks or double newlines
+    const rawParagraphs = htmlContent.split(/\n\n+/).filter(p => p.trim() !== '');
     
-    let charIndex = 0;
-    const textSpan = document.createElement('span');
-    element.appendChild(textSpan);
-    
-    let timer = setInterval(() => {
-      if (charIndex < fullText.length) {
-        textSpan.textContent += fullText.charAt(charIndex);
-        charIndex++;
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      } else {
-        clearInterval(timer);
-        element.innerHTML = finalHTML;
+    if (rawParagraphs.length === 0) {
+      element.innerHTML = parseMessageWithMath(htmlContent);
+      return;
+    }
+
+    rawParagraphs.forEach((paraText, index) => {
+      setTimeout(() => {
+        const parsedParaHTML = parseMessageWithMath(paraText);
         
+        const blockDiv = document.createElement('div');
+        blockDiv.className = 'flow-block';
+        blockDiv.innerHTML = parsedParaHTML;
+        blockDiv.style.marginBottom = '8px';
+        
+        element.appendChild(blockDiv);
+
+        // Render KaTeX live on this specific block as it flows in
         if (typeof renderMathInElement !== 'undefined') {
-          renderMathInElement(element, {
+          renderMathInElement(blockDiv, {
             delimiters: [
               {left: "$$", right: "$$", display: true},
               {left: "$", right: "$", display: false}
@@ -349,9 +364,10 @@
             throwOnError: false
           });
         }
+
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      }
-    }, speed);
+      }, index * 90);
+    });
   }
 
   function updateThemeUI(isDark, animate = true) {
@@ -381,6 +397,30 @@
       localStorage.setItem('theme', 'light');
     }
     updateThemeUI(isDark, true);
+  }
+
+  function saveChatHistory() {
+    const chatLog = conversationHistory
+      .filter(msg => msg.role !== 'system')
+      .map(msg => `${msg.role === 'user' ? 'You' : 'AI'}: ${msg.content}`)
+      .join('\n\n------------------------------------\n\n');
+
+    if (!chatLog) {
+      alert("No chat history to save yet!");
+      return;
+    }
+
+    const blob = new Blob([chatLog], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    link.href = url;
+    link.download = `chat-history-${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 
   window.addEventListener('DOMContentLoaded', () => {
@@ -442,7 +482,7 @@
       
       if (data.choices && data.choices.length > 0) {
         const botReply = data.choices[0].message.content;
-        typeWriterEffect(loadingDiv, botReply, 3);
+        flowInEffect(loadingDiv, botReply);
         conversationHistory.push({ role: "assistant", content: botReply });
       } else {
         loadingDiv.textContent = "Error: Invalid response, try again later.";
@@ -461,7 +501,7 @@
 
   function addMessage(text, sender) {
     const msgDiv = document.createElement('div');
-    msgDiv.classList.add('msg', sender);
+    msgDiv.classList.add('msg', sender, 'flow-block');
     
     if (sender === 'bot') {
       msgDiv.innerHTML = parseMessageWithMath(text);
@@ -481,25 +521,6 @@
     messagesContainer.appendChild(msgDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
     return msgDiv;
-  }
-
-  function saveChatHistory(){
-    const chatLog = conversationHistory.filter(msg => `${msg.role === 'user' ? 'You: ' : 'AI: '} ${msg.content}`).join('\n\n------------------------------------\n\n');
-    if(!chatLog) {
-      alert("No chat history to save.");
-      return;
-    }
-
-    const blob = new Blob([chatLog], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `chat-history-${new Date().toISOString().slice(0, 10)}.txt`;
-    document.body.appendChild(link);
-    link.click();
-
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   }
 </script>
 
