@@ -253,6 +253,22 @@
       transition: opacity 0.3s ease, transform 0.3s ease;
       display: inline-block;
     }
+
+    #save-btn {
+      margin-left: 6px;
+      padding: 10px 18px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+
+    #save-btn:hover {
+      background: #218838;
+    }
   </style>
 </head>
 <body>
@@ -274,6 +290,7 @@
   <div id="input-area">
     <input type="text" id="user-input" placeholder="Type a message..." />
     <button id="send-btn" onclick="sendMessage()">Send</button>
+    <button id="save-btn" onclick="saveChatHistory()">Save Chat</button>
   </div>
 </div>
 
@@ -464,6 +481,25 @@
     messagesContainer.appendChild(msgDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
     return msgDiv;
+  }
+
+  function saveChatHistory(){
+    const chatLog = conversationHistory.filter(msg => `${msg.role === 'user' ? 'You: ' : 'AI: '} ${msg.content}`).join('\n\n------------------------------------\n\n');
+    if(!chatLog) {
+      alert("No chat history to save.");
+      return;
+    }
+
+    const blob = new Blob([chatLog], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `chat-history-${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 </script>
 
