@@ -347,6 +347,53 @@
     .file-preview-badge button:hover {
       color: #ff4d4d;
     }
+
+    @keyframes badgeSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    #file-badge-container {
+      padding: 0 12px 6px 12px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .file-preview-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 123, 255, 0.15);
+      color: var(--text-color);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid var(--border-color);
+      animation: badgeSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .file-preview-badge button {
+      background: none;
+      border: none;
+      color: var(--text-color);
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .file-preview-badge button:hover {
+      color: #ff4d4d;
+    }
   </style>
 </head>
 <body>
