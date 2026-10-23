@@ -110,14 +110,45 @@
       background: var(--chat-bg);
     }
 
+    /* Unified input container */
+    #input-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 4px;
+      overflow: hidden;
+      transition: background-color 0.4s ease, border-color 0.4s ease;
+    }
+
+    #attach-btn {
+      padding: 0 12px;
+      background: transparent;
+      color: var(--text-color);
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 18px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, color 0.4s ease;
+    }
+
+    #attach-btn:hover {
+      background: rgba(128, 128, 128, 0.15);
+    }
+
     #user-input {
       flex: 1;
       padding: 10px;
-      border: 1px solid var(--input-border);
-      border-radius: 4px;
+      border: none;
+      background: transparent;
       font-size: 14px;
-      background: var(--input-bg);
       color: var(--text-color);
+      outline: none;
     }
 
     #send-btn {
@@ -281,6 +312,41 @@
       transition: opacity 0.3s ease, transform 0.3s ease;
       display: inline-block;
     }
+
+    #file-badge-container {
+      padding: 0 12px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .file-preview-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 123, 255, 0.15);
+      color: var(--text-color);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid var(--border-color);
+    }
+
+    .file-preview-badge button {
+      background: none;
+      border: none;
+      color: var(--text-color);
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .file-preview-badge button:hover {
+      color: #ff4d4d;
+    }
   </style>
 </head>
 <body>
@@ -296,11 +362,21 @@
       </label>
     </div>
   </div>
+  
   <div id="messages">
     <div class="msg bot flow-block">Hello! Ask me anything!</div>
   </div>
+
+  <div id="file-badge-container"></div>
+
   <div id="input-area">
-    <input type="text" id="user-input" placeholder="Type a message..." />
+    <input type="file" id="file-input" style="display: none;" onchange="handleFileSelect(event)" />
+    
+    <div id="input-wrapper">
+      <button id="attach-btn" onclick="document.getElementById('file-input').click()" title="Attach File">+</button>
+      <input type="text" id="user-input" placeholder="Type a message or attach a file..." />
+    </div>
+
     <button id="send-btn" onclick="sendMessage()">Send</button>
     <button id="save-btn" onclick="saveChatHistory()" title="Save Chat History">💾 Save</button>
   </div>
@@ -310,6 +386,9 @@
   const messagesContainer = document.getElementById('messages');
   const userInput = document.getElementById('user-input');
   const sendBtn = document.getElementById('send-btn');
+
+  let attachedFileContent = null;
+  let attachedFileName = null;
 
   const conversationHistory = [
     { role: "system", content: "You are a helpful, knowledgeable, and friendly assistant. Always structure your responses using rich Markdown formatting: use bold headers (###), bullet points, markdown tables for lists/timelines, and horizontal rules (---) to separate sections. When writing mathematical expressions or fractions, always use single dollar signs for inline math (e.g. $\\frac{a}{b}$) and double dollar signs for block math." }
@@ -335,7 +414,6 @@
   function flowInEffect(element, htmlContent) {
     element.innerHTML = "";
     
-    // Split the raw response into paragraph blocks or double newlines
     const rawParagraphs = htmlContent.split(/\n\n+/).filter(p => p.trim() !== '');
     
     if (rawParagraphs.length === 0) {
@@ -354,7 +432,6 @@
         
         element.appendChild(blockDiv);
 
-        // Render KaTeX live on this specific block as it flows in
         if (typeof renderMathInElement !== 'undefined') {
           renderMathInElement(blockDiv, {
             delimiters: [
@@ -454,12 +531,56 @@
     }
   });
 
+  function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      attachedFileContent = e.target.result;
+      attachedFileName = file.name;
+      
+      const badgeContainer = document.getElementById('file-badge-container');
+      badgeContainer.innerHTML = `
+        <div class="file-preview-badge">
+          <span>📎 ${file.name}</span>
+          <button onclick="removeAttachedFile()" title="Remove file">×</button>
+        </div>
+      `;
+      userInput.focus();
+    };
+    reader.readAsText(file);
+  }
+
+  function removeAttachedFile() {
+    attachedFileContent = null;
+    attachedFileName = null;
+    document.getElementById('file-input').value = '';
+    document.getElementById('file-badge-container').innerHTML = '';
+    userInput.focus();
+  }
+
   async function sendMessage() {
-    const text = userInput.value.trim();
+    let text = userInput.value.trim();
+
+    // Attach file content if present before clearing variables
+    if (attachedFileContent && attachedFileName) {
+      text = `${text ? text + '\n\n' : ''}[Attached File: ${attachedFileName}]\n\`\`\`\n${attachedFileContent}\n\`\`\``;
+    }
+
     if (!text) return;
 
-    addMessage(text, 'user');
+    // Display user message in chat
+    const displayMessage = userInput.value.trim() + (attachedFileName ? ` (Attached: ${attachedFileName})` : '');
+    addMessage(displayMessage, 'user');
+    
     conversationHistory.push({ role: "user", content: text });
+
+    // Reset attachment state
+    attachedFileContent = null;
+    attachedFileName = null;
+    document.getElementById('file-input').value = '';
+    document.getElementById('file-badge-container').innerHTML = '';
 
     userInput.value = '';
     userInput.disabled = true;
@@ -478,7 +599,7 @@
         })
       });
 
-      const data = await response.json();
+      const data = aliasResponse = await response.json();
       
       if (data.choices && data.choices.length > 0) {
         const botReply = data.choices[0].message.content;
