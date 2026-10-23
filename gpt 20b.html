@@ -184,7 +184,7 @@
       --bg-color: #1e1e1e;
       --chat-bg: #2c2c2c;
       --text-color: #f4f4f4;
-      --bot-bg: #2c2c2c;
+      --bot-bg: #3a3a3a;
       --bot-text: #f4f4f4;
       --user-bg: #0056b3;
       --user-text: #ffffff;
@@ -237,6 +237,22 @@
     input:checked + .slider:before {
       transform: translateX(18px);
     }
+
+    .theme-label-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .theme-text {
+      position: relative;
+      width: 80px;
+      text-align: right;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      display: inline-block;
+    }
   </style>
 </head>
 <body>
@@ -244,10 +260,13 @@
 <div id="chat-container">
   <div id="header-bar">
     <span>AI Chat</span>
-    <label class="theme-switch">
-      <input type="checkbox" id="theme-toggle" onchange="toggleTheme()">
-      <span class="slider"></span>
-    </label>
+    <div class="theme-label-container">
+      <span id="theme-label" class="theme-text">Light Mode</span>
+      <label class="theme-switch">
+        <input type="checkbox" id="theme-toggle" onchange="toggleTheme()">
+        <span class="slider"></span>
+      </label>
+    </div>
   </div>
   <div id="messages">
     <div class="msg bot">Hello! Ask me anything!</div>
@@ -318,6 +337,23 @@
     }, speed);
   }
 
+  function updateThemeUI(isDark, animate = true) {
+    const label = document.getElementById('theme-label');
+    
+    if (animate) {
+      label.style.opacity = '0';
+      label.style.transform = 'translateY(-4px)';
+    }
+
+    setTimeout(() => {
+      label.textContent = isDark ? 'Dark Mode' : 'Light Mode';
+      if (animate) {
+        label.style.opacity = '1';
+        label.style.transform = 'translateY(0)';
+      }
+    }, animate ? 150 : 0);
+  }
+
   function toggleTheme() {
     const isDark = document.getElementById('theme-toggle').checked;
     if (isDark) {
@@ -327,6 +363,7 @@
       document.documentElement.setAttribute('data-theme', 'light');
       localStorage.setItem('theme', 'light');
     }
+    updateThemeUI(isDark, true);
   }
 
   window.addEventListener('DOMContentLoaded', () => {
@@ -334,6 +371,9 @@
     if (savedTheme === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark');
       document.getElementById('theme-toggle').checked = true;
+      updateThemeUI(true, false);
+    } else {
+      updateThemeUI(false, false);
     }
   });
 
