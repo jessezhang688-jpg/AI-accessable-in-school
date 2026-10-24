@@ -1,0 +1,31 @@
+function doPost(e) {
+  var GROQ_API_KEY = "fill up your groq api key here"; 
+
+  try {
+    var requestData = JSON.parse(e.postData.contents);
+    
+    var payload = {
+      "model": requestData.model || "openai/gpt-oss-20b",
+      "messages": requestData.messages
+    };
+
+    var options = {
+      "method": "post",
+      "contentType": "application/json",
+      "headers": {
+        "Authorization": "Bearer " + GROQ_API_KEY
+      },
+      "payload": JSON.stringify(payload),
+      "muteHttpExceptions": true
+    };
+
+    var response = UrlFetchApp.fetch("https://api.groq.com/openai/v1/chat/completions", options);
+    
+    return ContentService.createTextOutput(response.getContentText())
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ "error": error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
