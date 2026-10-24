@@ -313,41 +313,7 @@
       display: inline-block;
     }
 
-    #file-badge-container {
-      padding: 0 12px;
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .file-preview-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(0, 123, 255, 0.15);
-      color: var(--text-color);
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 500;
-      border: 1px solid var(--border-color);
-    }
-
-    .file-preview-badge button {
-      background: none;
-      border: none;
-      color: var(--text-color);
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 14px;
-      padding: 0;
-      line-height: 1;
-    }
-
-    .file-preview-badge button:hover {
-      color: #ff4d4d;
-    }
-
+    /* Slide-up pop-up animation for file badge */
     @keyframes badgeSlideUp {
       from {
         opacity: 0;
@@ -443,7 +409,7 @@
 
   function parseMessageWithMath(text) {
     const mathBlocks = [];
-    let protectedText = text.replace(/(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$)/g, (match) => {
+    let protectedText = text.replace(/(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$|\\\[[\s\S]*?\\\]|\[[^\]\n]+?\])/g, (match) => {
       mathBlocks.push(match);
       return `@@MATH_${mathBlocks.length - 1}@@`;
     });
@@ -457,7 +423,7 @@
     return parsedHTML;
   }
 
-  // Flow-in effect with live KaTeX rendering per chunk
+  // Flow-in effect with live KaTeX rendering per chunk (supporting both $ and [] delimiters)
   function flowInEffect(element, htmlContent) {
     element.innerHTML = "";
     
@@ -483,7 +449,9 @@
           renderMathInElement(blockDiv, {
             delimiters: [
               {left: "$$", right: "$$", display: true},
-              {left: "$", right: "$", display: false}
+              {left: "$", right: "$", display: false},
+              {left: "\\[", right: "\\]", display: true},
+              {left: "[", right: "]", display: false}
             ],
             throwOnError: false
           });
@@ -677,7 +645,9 @@
         renderMathInElement(msgDiv, {
           delimiters: [
             {left: "$$", right: "$$", display: true},
-            {left: "$", right: "$", display: false}
+            {left: "$", right: "$", display: false},
+            {left: "\\[", right: "\\]", display: true},
+            {left: "[", right: "]", display: false}
           ],
           throwOnError: false
         });
