@@ -432,7 +432,7 @@
 
   function parseMessageWithMath(text) {
     const mathBlocks = [];
-    let protectedText = text.replace(/(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$|\\\[[\s\S]*?\\\]|\[[^\]\n]+?\])/g, (match) => {
+    let protectedText = text.replace(/(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\]|\$[^\$\n]+?\$|\[[^\]\n]+?\])/g, (match) => {
       mathBlocks.push(match);
       return `@@MATH_${mathBlocks.length - 1}@@`;
     });
