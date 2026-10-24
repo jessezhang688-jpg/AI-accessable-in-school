@@ -304,7 +304,7 @@
 
     .theme-text {
       position: relative;
-      width: 80px;
+      width: 105px;
       text-align: right;
       transition: opacity 0.3s ease, transform 0.3s ease;
       display: inline-block;
@@ -388,7 +388,7 @@
   <div id="header-bar">
     <span>AI Chat</span>
     <div class="theme-label-container">
-      <span id="theme-label" class="theme-text">Light Mode</span>
+      <span id="theme-label" class="theme-text">☀️ Light Mode</span>
       <label class="theme-switch">
         <input type="checkbox" id="theme-toggle" onchange="toggleTheme()">
         <span class="slider"></span>
@@ -505,7 +505,7 @@
     }
 
     setTimeout(() => {
-      label.textContent = isDark ? 'Dark Mode' : 'Light Mode';
+      label.textContent = isDark ? '🌙 Dark Mode' : '☀️ Light Mode';
       if (animate) {
         label.style.opacity = '1';
         label.style.transform = 'translateY(0)';
