@@ -432,6 +432,7 @@
 
   function parseMessageWithMath(text) {
     const mathBlocks = [];
+    // Bulletproof regex catching double dollars, spaced brackets, standard brackets, single dollars, and parenthesized LaTeX
     let protectedText = text.replace(/(\$\$[\s\S]*?\$\$|\\\s*\[[\s\S]*?\\\s*\]|\$[^\$\n]+?\$|\([^)]*\\(?:frac|dfrac|approx|boxed|sum|int|text)[^)]*\))/g, (match) => {
       mathBlocks.push(match);
       return `@@MATH_${mathBlocks.length - 1}@@`;
@@ -441,7 +442,6 @@
 
     mathBlocks.forEach((math, index) => {
       let formattedMath = math;
-      // If it's a parenthesized expression that is not already in LaTeX math mode, wrap it in single dollar signs
       if (math.startsWith('(') && math.endsWith(')') && !math.startsWith('($')) {
         formattedMath = `$${math.slice(1, -1)}$`;
       }
@@ -478,6 +478,7 @@
               {left: "$$", right: "$$", display: true},
               {left: "$", right: "$", display: false},
               {left: "\\[", right: "\\]", display: true},
+              {left: "\\ [", right: "\\]", display: true},
               {left: "[", right: "]", display: false}
             ],
             throwOnError: false
@@ -699,6 +700,7 @@
             {left: "$$", right: "$$", display: true},
             {left: "$", right: "$", display: false},
             {left: "\\[", right: "\\]", display: true},
+            {left: "\\ [", right: "\\]", display: true},
             {left: "[", right: "]", display: false}
           ],
           throwOnError: false
