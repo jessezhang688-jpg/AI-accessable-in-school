@@ -360,6 +360,29 @@
     .file-preview-badge button:hover {
       color: #ff4d4d;
     }
+
+    /* Particle Dispersal Animation Styles */
+    @keyframes particleFloat {
+      0% {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(var(--tx), var(--ty)) scale(0.3) rotate(var(--trot));
+      }
+    }
+
+    .particle {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: #007bff;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: particleFloat 0.5s ease-out forwards;
+      z-index: 999;
+    }
   </style>
 </head>
 <body>
@@ -423,7 +446,6 @@
     return parsedHTML;
   }
 
-  // Flow-in effect with live KaTeX rendering per chunk (supporting both $ and [] delimiters)
   function flowInEffect(element, htmlContent) {
     element.innerHTML = "";
     
@@ -568,6 +590,34 @@
   }
 
   function removeAttachedFile() {
+    const badgeElement = document.querySelector('.file-preview-badge');
+
+    if (badgeElement) {
+      const rect = badgeElement.getBoundingClientRect();
+
+      for (let i = 0; i < 12; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+
+        const tx = (Math.random() - 0.5) * 100;
+        const ty = -Math.random() * 60 - 20;
+        const trot = (Math.random() - 0.5) * 360;
+
+        particle.style.setProperty('--tx', `${tx}px`);
+        particle.style.setProperty('--ty', `${ty}px`);
+        particle.style.setProperty('--trot', `${trot}deg`);
+
+        particle.style.left = `${rect.left + rect.width / 2}px`;
+        particle.style.top = `${rect.top + rect.height / 2}px`;
+
+        document.body.appendChild(particle);
+
+        setTimeout(() => {
+          particle.remove();
+        }, 500);
+      }
+    }
+
     attachedFileContent = null;
     attachedFileName = null;
     document.getElementById('file-input').value = '';
@@ -578,20 +628,17 @@
   async function sendMessage() {
     let text = userInput.value.trim();
 
-    // Attach file content if present before clearing variables
     if (attachedFileContent && attachedFileName) {
       text = `${text ? text + '\n\n' : ''}[Attached File: ${attachedFileName}]\n\`\`\`\n${attachedFileContent}\n\`\`\``;
     }
 
     if (!text) return;
 
-    // Display user message in chat
     const displayMessage = userInput.value.trim() + (attachedFileName ? ` (Attached: ${attachedFileName})` : '');
     addMessage(displayMessage, 'user');
     
     conversationHistory.push({ role: "user", content: text });
 
-    // Reset attachment state
     attachedFileContent = null;
     attachedFileName = null;
     document.getElementById('file-input').value = '';
