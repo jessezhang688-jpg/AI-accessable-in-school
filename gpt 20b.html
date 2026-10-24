@@ -427,13 +427,15 @@
   let attachedFileName = null;
 
   const conversationHistory = [
-    { role: "system", content: "You are a helpful, knowledgeable, and friendly assistant. Always structure your responses using rich Markdown formatting: use bold headers (###), bullet points, markdown tables for lists/timelines, and horizontal rules (---) to separate sections. When writing mathematical expressions or fractions, always use single dollar signs for inline math (e.g. $\\frac{a}{b}$) and double dollar signs for block math." }
+    { 
+      role: "system", 
+      content: "You are a helpful, knowledgeable, and friendly assistant. Always structure your responses using rich Markdown formatting: use bold headers (###), bullet points, markdown tables for lists/timelines, and horizontal rules (---) to separate sections. STRICT MATH RULES: 1. Always use single dollar signs for inline math (e.g. $\\frac{a}{b}$) and double dollar signs for block math (e.g. $$\\frac{a}{b}$$). 2. NEVER use square brackets like \\[...\\] or \\ [ ... \\] for math equations. 3. NEVER put punctuation marks like periods or commas immediately outside or trailing inside dollar signs (e.g., write '$3x = 5$' instead of '$3x = 5.$'). Keep all math strictly clean and well-formed." 
+    }
   ];
 
   function parseMessageWithMath(text) {
     const mathBlocks = [];
-    // Bulletproof regex catching double dollars, spaced brackets, standard brackets, single dollars, and parenthesized LaTeX
-    let protectedText = text.replace(/(\$\$[\s\S]*?\$\$|\\\s*\[[\s\S]*?\\\s*\]|\$[^\$\n]+?\$|\([^)]*\\(?:frac|dfrac|approx|boxed|sum|int|text)[^)]*\))/g, (match) => {
+    let protectedText = text.replace(/(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$)/g, (match) => {
       mathBlocks.push(match);
       return `@@MATH_${mathBlocks.length - 1}@@`;
     });
@@ -441,11 +443,7 @@
     let parsedHTML = typeof marked !== 'undefined' ? marked.parse(protectedText) : protectedText;
 
     mathBlocks.forEach((math, index) => {
-      let formattedMath = math;
-      if (math.startsWith('(') && math.endsWith(')') && !math.startsWith('($')) {
-        formattedMath = `$${math.slice(1, -1)}$`;
-      }
-      parsedHTML = parsedHTML.replace(`@@MATH_${index}@@`, formattedMath);
+      parsedHTML = parsedHTML.replace(`@@MATH_${index}@@`, math);
     });
 
     return parsedHTML;
@@ -476,10 +474,7 @@
           renderMathInElement(blockDiv, {
             delimiters: [
               {left: "$$", right: "$$", display: true},
-              {left: "$", right: "$", display: false},
-              {left: "\\[", right: "\\]", display: true},
-              {left: "\\ [", right: "\\]", display: true},
-              {left: "[", right: "]", display: false}
+              {left: "$", right: "$", display: false}
             ],
             throwOnError: false
           });
@@ -698,10 +693,7 @@
         renderMathInElement(msgDiv, {
           delimiters: [
             {left: "$$", right: "$$", display: true},
-            {left: "$", right: "$", display: false},
-            {left: "\\[", right: "\\]", display: true},
-            {left: "\\ [", right: "\\]", display: true},
-            {left: "[", right: "]", display: false}
+            {left: "$", right: "$", display: false}
           ],
           throwOnError: false
         });
