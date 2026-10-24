@@ -591,7 +591,7 @@
       badgeContainer.innerHTML = `
         <div class="file-preview-badge">
           <span>📎 ${file.name}</span>
-          <button onclick="removeAttachedFile()" title="Remove file">×</button>
+          <button onclick="removeAttachedFile()" title="Remove file">&times;</button>
         </div>
       `;
       userInput.focus();
@@ -646,7 +646,7 @@
         })
       });
 
-      const data = aliasResponse = await response.json();
+      const data = await response.json();
       
       if (data.choices && data.choices.length > 0) {
         const botReply = data.choices[0].message.content;
