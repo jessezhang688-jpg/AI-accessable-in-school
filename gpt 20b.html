@@ -432,7 +432,7 @@
 
   function parseMessageWithMath(text) {
     const mathBlocks = [];
-    let protectedText = text.replace(/(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\]|\$[^\$\n]+?\$|\[[^\]\n]+?\])/g, (match) => {
+    let protectedText = text.replace(/(\$\$[\s\S]*?\$\$|\\\s*\[[\s\S]*?\\\s*\]|\$[^\$\n]+?\$|\([^)]*\\(?:frac|dfrac|approx|boxed|sum|int|text)[^)]*\))/g, (match) => {
       mathBlocks.push(match);
       return `@@MATH_${mathBlocks.length - 1}@@`;
     });
@@ -440,7 +440,12 @@
     let parsedHTML = typeof marked !== 'undefined' ? marked.parse(protectedText) : protectedText;
 
     mathBlocks.forEach((math, index) => {
-      parsedHTML = parsedHTML.replace(`@@MATH_${index}@@`, math);
+      let formattedMath = math;
+      // If it's a parenthesized expression that is not already in LaTeX math mode, wrap it in single dollar signs
+      if (math.startsWith('(') && math.endsWith(')') && !math.startsWith('($')) {
+        formattedMath = `$${math.slice(1, -1)}$`;
+      }
+      parsedHTML = parsedHTML.replace(`@@MATH_${index}@@`, formattedMath);
     });
 
     return parsedHTML;
