@@ -1,11 +1,20 @@
-function doPost(e) {
-  var GROQ_API_KEY = "YOUR_ACTUAL_GROQ_API_KEY_HERE"; // Replace with your valid Groq API key
+var GROQ_API_KEY = "YOUR_ACTRUAL_GROQ_API_KEY";
 
+function doPost(e) {
   try {
     var requestData = JSON.parse(e.postData.contents);
+    var frontendModel = requestData.model || "gpt-20b";
     
+    var groqModel = "openai/gpt-oss-20b"; // Default fallback
+    
+    if (frontendModel === "gpt-120b") {
+      groqModel = "openai/gpt-oss-120b"; 
+    } else if (frontendModel === "gpt-20b") {
+      groqModel = "openai/gpt-oss-20b"; 
+    }
+
     var payload = {
-      "model": requestData.model || "openai/gpt-oss-20b",
+      "model": groqModel,
       "messages": requestData.messages
     };
 
