@@ -38,6 +38,28 @@
       height: 100vh;
       width: 100vw;
       background: var(--chat-bg);
+      position: relative;
+    }
+
+    #scroll-bottom-btn {
+      position: absolute;
+      right: 20px;
+      bottom: 75px;
+      background: var(--user-bg);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s, transform 0.2s;
+      z-index: 100;
     }
 
     #messages {
@@ -53,9 +75,11 @@
     .msg p {
       margin: 0 0 8px 0;
     }
+
     .msg p:last-child {
       margin-bottom: 0;
     }
+
     .msg pre {
       background: #272822;
       color: #f8f8f2;
@@ -425,6 +449,7 @@
   <div id="messages">
     <div class="msg bot flow-block">Hello! Ask me anything!</div>
   </div>
+  <button id="scrool-botton-btn" onclick="scrollToBottom()" title="Scrool to Bottom">
 
   <div id="file-badge-container"></div>
 
@@ -817,11 +842,29 @@
     const code = pre.querySelector('code');
     const textToCopy = code ? code.innerText : pre.innerText;
     
-    navigator.clipboard.writeText(textToCopy).then(() =>{
+    navigator.clipboard.writeText(textToCopy).then(() => {
       button.textContent = 'Copied!';
       setTimeout(() => {
         button.textContent = 'Copy';
       }, 1500);
+    });
+  }
+
+  const scrollBtn = document.getElementByID('scrool-bottom-btn');
+
+  messagesContainer.addEventListener('scroll', () => {
+    const distanceToBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight;
+    if (distanceToBottom > 150) {
+      scrollBtn.classList.add('visible');
+    }else{
+      scrollBtn.classList.remove('visible');
+    }
+  });
+
+  function scrollToBottom(){
+    messagesContainer.scrollTo({
+      top: messagesContainer.scrollHeight,
+      behavior: 'smooth'
     });
   }
 </script>
