@@ -797,7 +797,7 @@
     return msgDiv;
   }
 
-  function attachCopyButtons(contianer) {
+  function attachCopyButtons(container) {
     const codeBlocks = container.querySelectorAll('pre');
     codeBlocks.forEach((pre) => {
       if (pre.querySelector('.code-header')) return; //Aviod duplicates
