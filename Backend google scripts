@@ -4,7 +4,6 @@ function doPost(e) {
   try {
     var requestData = JSON.parse(e.postData.contents);
     var frontendModel = requestData.model || "gpt-20b";
-    
     var groqModel = "openai/gpt-oss-20b"; // Default fallback
     
     if (frontendModel === "gpt-120b") {
@@ -17,6 +16,13 @@ function doPost(e) {
       "model": groqModel,
       "messages": requestData.messages
     };
+
+    if(requestData.reasoning_effort) {
+      payload.reasoning_effort = requestData.reasoning_effort;
+    }
+    if(requestData.max_completion_tokens){
+      payload.max_completion_tokens = requestData.max_completion_tokens;
+    }
 
     var options = {
       "method": "post",
