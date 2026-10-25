@@ -503,7 +503,9 @@
   <div id="header-bar">
     <div style="display: flex; align-items: center; gap: 8px;">
       <span>AI Chat</span>
-      <button onclick="openPromptModal()" style="background: none; border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer;" title="Customize AI Prompt">⚙️ Prompt</button>
+      <button onclick="openPromptModal()" style="background: none; border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer;" title="Customize AI Persona">⚙️ Prompt</button>
+      <!-- ADD THIS CLEAR BUTTON -->
+      <button onclick="clearChat()" style="background: none; border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer;" title="Clear Chat History">🗑️ Clear</button>
     </div>
     <div class="theme-label-container">
       <span id="theme-label" class="theme-text">☀️ Light Mode</span>
@@ -980,6 +982,24 @@
     closePromptModal();
     addMessage("🤖 System prompt updated!", "bot");
   }
+
+  function clearChat(){
+  if(isGenerating) {
+    stopGeneration();
+  }
+
+  const systemPrompt = conversationHistory[0];
+  conversationHistory.length = 0;
+  conversationHistory.push(systemPrompt);
+
+  messagesContainer.innerHTML = '<div class="msg bot flow-block">Hello! Ask me anything!</div>'; // <-- Added 's'
+
+  if(attachedFileName){
+    removeAttachedFile();
+  }
+
+  userInput.focus();
+}
 </script>
 
 </body>
