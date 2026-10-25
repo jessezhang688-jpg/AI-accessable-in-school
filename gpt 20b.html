@@ -63,6 +63,15 @@
       z-index: 100;
     }
 
+    #scroll-bottom-btn.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    #scroll-bottom-btn:hover {
+      transform: scale(1.1);
+    }
+
     #messages {
       flex: 1;
       padding: 12px;
@@ -408,7 +417,7 @@
       justify-content: space-between;
       align-items: center;
       background: #1e1e1e;
-      color:#aaa;
+      color: #aaa;
       padding: 4px 10px;
       font-size: 11px;
       font-family: monospace;
@@ -416,7 +425,7 @@
       border-top-right-radius: 6px;
     }
 
-    .copy-code-btn{
+    .copy-code-btn {
       background: transparent;
       border: 1px solid #555;
       color: #ccc;
@@ -429,7 +438,7 @@
 
     .copy-code-btn:hover {
       background: #333;
-      color: #fff
+      color: #fff;
     }
   </style>
 </head>
@@ -450,6 +459,7 @@
   <div id="messages">
     <div class="msg bot flow-block">Hello! Ask me anything!</div>
   </div>
+  
   <button id="scroll-bottom-btn" onclick="scrollToBottom()" title="Scroll to bottom">⬇️</button>
 
   <div id="file-badge-container"></div>
@@ -471,6 +481,7 @@
   const messagesContainer = document.getElementById('messages');
   const userInput = document.getElementById('user-input');
   const sendBtn = document.getElementById('send-btn');
+  const scrollBtn = document.getElementById('scroll-bottom-btn');
 
   let attachedFileContent = null;
   let attachedFileName = null;
@@ -826,7 +837,7 @@
   function attachCopyButtons(container) {
     const codeBlocks = container.querySelectorAll('pre');
     codeBlocks.forEach((pre) => {
-      if (pre.querySelector('.code-header')) return; //Aviod duplicates
+      if (pre.querySelector('.code-header')) return; // Avoid duplicates
 
       const header = document.createElement('div');
       header.className = 'code-header';
@@ -834,7 +845,7 @@
         <span>code</span>
         <button class="copy-code-btn" onclick="copyCodeText(this)">Copy</button>
       `;
-      pre.insertBefore(header,pre.firstChild);
+      pre.insertBefore(header, pre.firstChild);
     });
   }
 
@@ -851,18 +862,16 @@
     });
   }
 
-  const scrollBtn = document.getElementById('scrool-bottom-btn');
-
   messagesContainer.addEventListener('scroll', () => {
     const distanceToBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight;
     if (distanceToBottom > 150) {
       scrollBtn.classList.add('visible');
-    }else{
+    } else {
       scrollBtn.classList.remove('visible');
     }
   });
 
-  function scrollToBottom(){
+  function scrollToBottom() {
     messagesContainer.scrollTo({
       top: messagesContainer.scrollHeight,
       behavior: 'smooth'
