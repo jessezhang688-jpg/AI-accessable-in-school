@@ -55,6 +55,7 @@
       cursor: pointer;
       display: flex;
       align-items: center;
+      justify-content: center;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
       opacity: 0;
       visibility: hidden;
@@ -449,7 +450,7 @@
   <div id="messages">
     <div class="msg bot flow-block">Hello! Ask me anything!</div>
   </div>
-  <button id="scrool-botton-btn" onclick="scrollToBottom()" title="Scrool to Bottom">
+  <button id="scroll-botton-btn" onclick="scrollToBottom()" title="Scroll to Bottom">
 
   <div id="file-badge-container"></div>
 
@@ -850,7 +851,7 @@
     });
   }
 
-  const scrollBtn = document.getElementByID('scrool-bottom-btn');
+  const scrollBtn = document.getElementById('scrool-bottom-btn');
 
   messagesContainer.addEventListener('scroll', () => {
     const distanceToBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight;
