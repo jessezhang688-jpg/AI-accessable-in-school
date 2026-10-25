@@ -288,6 +288,8 @@
       border-bottom: 1px solid var(--border-color);
       font-weight: bold;
       font-size: 15px;
+      position: relative;
+      z-index: 10;
     }
 
     .theme-switch {
@@ -440,13 +442,69 @@
       background: #333;
       color: #fff;
     }
+
+    /* Modal Styles Fixed */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(3px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      z-index: 9999;
+    }
+
+    .modal-overlay.visible {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      background: var(--chat-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      padding: 18px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      transform: translateY(-10px);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.visible .modal-content {
+      transform: translateY(0);
+    }
+
+    #modal-prompt-input {
+      width: 100%;
+      padding: 8px;
+      background: var(--input-bg);
+      color: var(--text-color);
+      border: 1px solid var(--input-border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 13px;
+      resize: vertical;
+      outline: none;
+    }
+
   </style>
 </head>
 <body>
 
 <div id="chat-container">
   <div id="header-bar">
-    <span>AI Chat</span>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span>AI Chat</span>
+      <button onclick="openPromptModal()" style="background: none; border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer;" title="Customize AI Prompt">⚙️ Prompt</button>
+    </div>
     <div class="theme-label-container">
       <span id="theme-label" class="theme-text">☀️ Light Mode</span>
       <label class="theme-switch">
@@ -475,6 +533,20 @@
     <button id="send-btn" onclick="sendMessage()">Send</button>
     <button id="save-btn" onclick="saveChatHistory()" title="Save Chat History">💾 Save</button>
   </div>
+
+  <!-- Custom System Prompt Modal -->
+  <div id="prompt-modal-overlay" class="modal-overlay">
+    <div class="modal-content">
+      <h3 style="margin-top: 0; margin-bottom: 8px; font-size: 16px;">Customize System Prompt</h3>
+      <p style="font-size: 12px; color: #888; margin-top: 0; margin-bottom: 12px;">Define how the AI behaves, speaks, or formats its answers.</p>
+      <textarea id="modal-prompt-input" rows="5" placeholder="e.g., You are a friendly math tutor. Explain concepts step-by-step using simple analogies..."></textarea>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px;">
+        <button onclick="closePromptModal()" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-color); padding: 6px 12px; border-radius: 4px; cursor: pointer;">Cancel</button>
+        <button onclick="saveSystemPrompt()" style="background: #007bff; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-weight: bold;">Save Prompt</button>
+      </div>
+    </div>
+  </div>
+  
 </div>
 
 <script>
@@ -673,6 +745,11 @@
       updateThemeUI(true, false);
     } else {
       updateThemeUI(false, false);
+    }
+
+    const savedPrompt = localStorage.getItem('customSystemPrompt');
+    if (savedPrompt) {
+      conversationHistory[0].content = savedPrompt;
     }
   });
 
@@ -876,6 +953,32 @@
       top: messagesContainer.scrollHeight,
       behavior: 'smooth'
     });
+  }
+
+  const modalOverlay = document.getElementById('prompt-modal-overlay');
+  const modalPromptInput = document.getElementById('modal-prompt-input');
+
+  function openPromptModal() {
+    modalPromptInput.value = conversationHistory[0].content;
+    modalOverlay.classList.add('visible');
+  }
+
+  function closePromptModal() {
+    modalOverlay.classList.remove('visible');
+  }
+
+  function saveSystemPrompt() {
+    const customPrompt = modalPromptInput.value.trim();
+    if (!customPrompt) {
+      alert("System prompt cannot be empty!");
+      return;
+    }
+
+    conversationHistory[0].content = customPrompt;
+    localStorage.setItem('customSystemPrompt', customPrompt);
+
+    closePromptModal();
+    addMessage("🤖 System prompt updated!", "bot");
   }
 </script>
 
