@@ -44,3 +44,16 @@ A lightweight, feature-packed, single-file AI chat application designed to embed
 * **Marked.js**: Markdown parsing
 * **KaTeX**: Math formula rendering
 * **Google Apps Script**: Proxy endpoint handler
+
+---
+### API Placeholder
+In `gpt 20b.html`, ensure you replace your live URL with a placeholder before making your repository public:
+
+```javascript
+const SCRIPT_URL = "YOUR_GOOGLE_SCRIPT_URL_HERE";
+```
+
+Also in `Backend google scripts`, same thing, replace it with your own API key
+```javascript
+var GROQ_API_KEY = "YOUR_ACTUAL_GROQ_API_KEY_HERE";
+```
