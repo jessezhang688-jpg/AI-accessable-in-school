@@ -1,1 +1,1 @@
-HTML codes for an AI chatbot, uses Google Scripts to walk around the restrictions of school-blocking extensions and blocks. Demo link: https://sites.google.com/view/compscicenter/home?authuser=0
+HTML codes for an AI chatbot, features a save chat history button, a dark & light mode switch, a custome prompt window, and much more! Demo link: https://sites.google.com/view/terra-demos/demos/ai-accesable-in-school
