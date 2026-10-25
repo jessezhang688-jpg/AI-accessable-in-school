@@ -506,6 +506,7 @@
       <span>AI Chat</span>
       <button onclick="openPromptModal()" style="background: none; border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer;" title="Customize AI Persona">⚙️ Prompt</button>
       <button onclick="clearChat()" style="background: none; border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer;" title="Clear Chat History">🗑️ Clear</button>
+      <button onclick="openStatsModal()" style="background: none; border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer;" title="Chat Statistics">📊 Stats</button>
     </div>
     <div class="theme-label-container">
       <span id="theme-label" class="theme-text">☀️ Light Mode</span>
@@ -551,6 +552,25 @@
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- Chat Statistics Modal -->
+  <div id="stats-modal-overlay" class="modal-overlay">
+    <div class="modal-content">
+      <h3 style="margin-top: 0; margin-bottom: 8px; font-size: 16px;">Chat Statistics</h3>
+      <p style="font-size: 12px; color: #888; margin-top: 0; margin-bottom: 12px;">Live metrics for your current conversation session.</p>
+      
+      <div style="font-size: 13px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+        <div><strong>Total Messages:</strong> <span id="stat-msg-count">0</span></div>
+        <div><strong>User / AI Turns:</strong> <span id="stat-turns">0 user / 0 AI</span></div>
+        <div><strong>Total Characters:</strong> <span id="stat-chars">0</span></div>
+        <div><strong>Estimated Tokens:</strong> <span id="stat-tokens">0</span></div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end;">
+        <button onclick="closeStatsModal()" style="background: #007bff; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-weight: bold;">Close</button>
+      </div>
     </div>
   </div>
   
@@ -991,6 +1011,33 @@
 
     closePromptModal();
     addMessage("🤖 System prompt updated!", "bot");
+  }
+
+  const statsModalOverlay = document.getElementById('stats-modal-overlay');
+
+  function openStatsModal() {
+    const chatMsgs = conversationHistory.filter(m => m.role !== 'system');
+    const totalMsgs = chatMsgs.length;
+    const userMsgs = chatMsgs.filter(m => m.role === 'user').length;
+    const botMsgs = chatMsgs.filter(m => m.role === 'assistant').length;
+
+    let totalChars = 0;
+    chatMsgs.forEach(m => {
+      totalChars += m.content.length;
+    });
+
+    const estimatedTokens = Math.ceil(totalChars / 4);
+
+    document.getElementById('stat-msg-count').textContent = totalMsgs;
+    document.getElementById('stat-turns').textContent = `${userMsgs} user / ${botMsgs} AI`;
+    document.getElementById('stat-chars').textContent = totalChars.toLocaleString();
+    document.getElementById('stat-tokens').textContent = estimatedTokens.toLocaleString();
+
+    statsModalOverlay.classList.add('visible');
+  }
+
+  function closeStatsModal() {
+    statsModalOverlay.classList.remove('visible');
   }
 
   function clearChat() {
