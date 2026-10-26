@@ -10,6 +10,10 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
 
+  <!-- 3. Include Highlight.js CSS and JS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
   <style>
     /* Smooth transition animation for theme switching */
     body, #chat-container, #header-bar, #input-area, #user-input, .msg {
@@ -92,18 +96,23 @@
     }
 
     .msg pre {
-      background: #272822;
+      background: #1e1e1e;
       color: #f8f8f2;
       padding: 8px;
       border-radius: 6px;
       overflow-x: auto;
       font-size: 12px;
+      margin: 8px 0;
     }
     .msg code {
       font-family: monospace;
       background: rgba(0, 0, 0, 0.08);
       padding: 2px 4px;
       border-radius: 4px;
+    }
+    .msg pre code {
+      background: transparent;
+      padding: 0;
     }
     .msg ul, .msg ol {
       margin: 4px 0;
@@ -269,6 +278,35 @@
 
     #attach-btn:hover {
       background: rgba(128, 128, 128, 0.15);
+    }
+
+    #mic-btn {
+      padding: 0 10px;
+      background: transparent;
+      color: var(--text-color);
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, color 0.4s ease;
+    }
+
+    #mic-btn:hover {
+      background: rgba(128, 128, 128, 0.15);
+    }
+
+    #mic-btn.recording {
+      color: #dc3545;
+      animation: pulseMic 1.5s infinite;
+    }
+
+    @keyframes pulseMic {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.15); }
+      100% { opacity: 1; transform: scale(1); }
     }
 
     #user-input {
@@ -497,29 +535,6 @@
       color: #ff4d4d;
     }
 
-    /* Particle Dispersal Animation Styles */
-    @keyframes particleFloat {
-      0% {
-        opacity: 1;
-        transform: translate(0, 0) scale(1);
-      }
-      100% {
-        opacity: 0;
-        transform: translate(var(--tx), var(--ty)) scale(0.3) rotate(var(--trot));
-      }
-    }
-
-    .particle {
-      position: absolute;
-      width: 6px;
-      height: 6px;
-      background: #007bff;
-      border-radius: 50%;
-      pointer-events: none;
-      animation: particleFloat 0.5s ease-out forwards;
-      z-index: 999;
-    }
-
     .code-header {
       display: flex;
       justify-content: space-between;
@@ -549,7 +564,7 @@
       color: #fff;
     }
 
-    /* Modal Styles Fixed */
+    /* Modal Styles */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -764,6 +779,7 @@
       
       <div id="input-wrapper">
         <button id="attach-btn" onclick="document.getElementById('file-input').click()" title="Attach File">+</button>
+        <button id="mic-btn" onclick="toggleVoiceInput()" title="Voice Input">🎙️</button>
         
         <textarea id="user-input" placeholder="Type a message or attach a file..." rows="1"></textarea>
 
@@ -849,6 +865,69 @@
   let isGenerating = false;
   let timeoutIDs = [];
 
+  let recognition = null;
+  let isRecording = false;
+
+  function toggleVoiceInput() {
+    const micBtn = document.getElementById('mic-btn');
+
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert("Speech recognition is not supported in this browser. Please use Google Chrome or Microsoft Edge.");
+      return;
+    }
+
+    if (isRecording) {
+      if (recognition) recognition.stop();
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = true;
+    recognition.continuous = true; // Fixed: keeps listening until clicked again
+
+    recognition.onstart = function() {
+      isRecording = true;
+      micBtn.classList.add('recording');
+      userInput.placeholder = "Listening...";
+    };
+
+    recognition.onresult = function(event) {
+      let finalTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        }
+      }
+
+      if (finalTranscript) {
+        userInput.value += (userInput.value ? ' ' : '') + finalTranscript;
+        userInput.style.height = 'auto';
+        userInput.style.height = (userInput.scrollHeight) + 'px';
+      }
+    };
+
+    recognition.onerror = function(event) {
+      console.error("Speech recognition error:", event.error);
+      stopRecordingState();
+    };
+
+    recognition.onend = function() {
+      stopRecordingState();
+    };
+
+    recognition.start();
+  }
+
+  function stopRecordingState() {
+    isRecording = false;
+    const micBtn = document.getElementById('mic-btn');
+    if (micBtn) micBtn.classList.remove('recording');
+    userInput.placeholder = "Type a message or attach a file...";
+  }
+
   function toggleModelDropdown() {
     const menu = document.getElementById('model-dropdown-menu');
     menu.classList.toggle('visible');
@@ -859,7 +938,6 @@
     document.getElementById('current-model-label').textContent = labelText;
     document.getElementById('model-dropdown-menu').classList.remove('visible');
     
-    // Toggle thinking bar visibility based on active model
     const thinkingBar = document.getElementById('thinking-bar');
     if (modelVal === "openai/gpt-oss-120b") {
       thinkingBar.classList.add('visible');
@@ -947,12 +1025,22 @@
     return parsedHTML;
   }
 
+  function highlightCodeBlocks(container) {
+    if (typeof hljs !== 'undefined') {
+      container.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
+      });
+    }
+  }
+
   function flowInEffect(element, htmlContent) {
     element.innerHTML = "";
     const rawParagraphs = htmlContent.split(/\n\n+/).filter(p => p.trim() !== '');
     
     if (rawParagraphs.length === 0) {
       element.innerHTML = parseMessageWithMath(htmlContent);
+      attachCopyButtons(element);
+      highlightCodeBlocks(element);
       setGeneratingState(false);
       userInput.disabled = false;
       userInput.focus();
@@ -971,6 +1059,7 @@
         
         element.appendChild(blockDiv);
         attachCopyButtons(blockDiv);
+        highlightCodeBlocks(blockDiv);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
         if (index === rawParagraphs.length - 1) {
@@ -1186,6 +1275,8 @@
     msgDiv.classList.add('msg', sender, 'flow-block');
     if (sender === 'bot') {
       msgDiv.innerHTML = parseMessageWithMath(text);
+      attachCopyButtons(msgDiv);
+      highlightCodeBlocks(msgDiv);
     } else {
       msgDiv.textContent = text;
     }
