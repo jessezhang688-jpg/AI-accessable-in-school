@@ -140,6 +140,7 @@
       flex-direction: column;
       border-top: 1px solid var(--border-color);
       background: var(--chat-bg);
+      position: relative;
     }
 
     #input-main-row {
@@ -148,20 +149,94 @@
       align-items: center;
     }
 
-    /* Contextual Thinking Level Bar */
+    /* CHATGPT-STYLE FLOATING THINKING POPOVER CARD */
     #thinking-bar {
       display: none;
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 12px;
+      width: 260px;
+      background: var(--chat-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      padding: 14px;
       flex-direction: column;
-      gap: 4px;
-      padding: 8px 14px;
-      background: rgba(0, 123, 255, 0.06);
-      border-bottom: 1px solid var(--border-color);
-      font-size: 12px;
-      animation: badgeSlideUp 0.25s ease;
+      gap: 12px;
+      z-index: 1000;
+      animation: badgeSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
     #thinking-bar.visible {
       display: flex;
+    }
+
+    /* Track Container holding slider + background dots */
+    .slider-track-container {
+      position: relative;
+      width: 100%;
+      height: 32px;
+      background: rgba(128, 128, 128, 0.12);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      padding: 0 4px;
+    }
+
+    /* 5 Internal Dot Indicators */
+    .slider-dots {
+      position: absolute;
+      left: 4px;
+      right: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 10px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .slider-dots span {
+      width: 4px;
+      height: 4px;
+      background: #888;
+      border-radius: 50%;
+      opacity: 0.6;
+    }
+
+    /* Interactive Range Slider overlay */
+    #thinking-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      outline: none;
+      margin: 0;
+      cursor: pointer;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Slider Thumb contained entirely inside the pill */
+    #thinking-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      cursor: pointer;
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    [data-theme="dark"] #thinking-slider::-webkit-slider-thumb {
+      background: #e0e0e0;
+    }
+
+    #thinking-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.08);
     }
 
     /* Unified input container */
@@ -631,30 +706,48 @@
 
   <div id="file-badge-container"></div>
 
-  <!-- INPUT AREA WITH CONTEXTUAL THINKING BAR -->
+  <!-- INPUT AREA -->
   <div id="input-area">
-    <!-- Thinking Level Bar (Appears only for 120B) -->
+    <!-- ChatGPT-Style Floating Thinking Card (Appears only for 120B) -->
     <div id="thinking-bar">
-      <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-        <span>🧠 Reasoning Effort: <strong id="thinking-current-label" style="color: #28a745;">Basic</strong></span>
-        <input 
-          type="range" 
-          id="thinking-slider" 
-          min="1" 
-          max="5" 
-          step="1" 
-          value="1" 
-          oninput="updateThinkingDisplay(this.value)" 
-          style="width: 160px; cursor: pointer;"
-        >
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 20px;">💡</span>
+        <div>
+          <div style="font-weight: bold; font-size: 13px; color: var(--text-color);">Thinking level</div>
+          <div style="font-size: 11px; color: #888;">For deeper questions (<span id="thinking-current-label" style="color: #28a745; font-weight: bold;">Basic</span>)</div>
+        </div>
       </div>
-      <!-- Tier labels under the slider -->
-      <div style="display: flex; justify-content: space-between; font-size: 9px; color: #888; padding-left: 48%; padding-right: 2px;">
-        <span>Basic</span>
-        <span>Pro</span>
-        <span>Max</span>
-        <span>Ultra</span>
-        <span>Unlimited</span>
+      
+      <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+        <!-- Inset Track with Internal Thumb & Dots -->
+        <div class="slider-track-container">
+          <div class="slider-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <input 
+            type="range" 
+            id="thinking-slider" 
+            min="1" 
+            max="5" 
+            step="0.01" 
+            value="1" 
+            oninput="updateThinkingDisplay(this.value)" 
+            onchange="snapThinkingSlider(this)"
+          />
+        </div>
+
+        <!-- Perfectly aligned labels under each step dot -->
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); text-align: center; font-size: 9px; color: #888;">
+          <span>Basic</span>
+          <span>Pro</span>
+          <span>Max</span>
+          <span>Ultra</span>
+          <span>Unlimited</span>
+        </div>
       </div>
     </div>
 
@@ -1188,34 +1281,49 @@
   }
 
   function updateThinkingDisplay(val) {
+    const numVal = parseFloat(val);
+    let level = 1;
+    if (numVal >= 4.5) level = 5;
+    else if (numVal >= 3.5) level = 4;
+    else if (numVal >= 2.5) level = 3;
+    else if (numVal >= 1.5) level = 2;
+    else level = 1;
+
     const label = document.getElementById('thinking-current-label');
 
-    if (val == "1") {
+    if (level === 1) {
       currentReasoningEffort = "low";
       currentMaxTokens = 1024;
       label.textContent = "Basic";
       label.style.color = "#28a745";
-    } else if (val == "2") {
+    } else if (level === 2) {
       currentReasoningEffort = "medium";
       currentMaxTokens = 2048;
       label.textContent = "Pro";
       label.style.color = "#17a2b8";
-    } else if (val === "3") {
+    } else if (level === 3) {
       currentReasoningEffort = "medium";
       currentMaxTokens = 4096;
       label.textContent = "Max";
       label.style.color = "#007bff";
-    } else if (val == "4") {
+    } else if (level === 4) {
       currentReasoningEffort = "high";
       currentMaxTokens = 8192;
       label.textContent = "Ultra";
       label.style.color = "#6f42c1";
-    } else if (val == "5") {
+    } else if (level === 5) {
       currentReasoningEffort = "high";
       currentMaxTokens = null;
       label.textContent = "Unlimited";
       label.style.color = "#dc3545";
     }
+  }
+
+  function snapThinkingSlider(slider) {
+    const numVal = parseFloat(slider.value);
+    let level = Math.round(numVal);
+    slider.value = level;
+    updateThinkingDisplay(level);
   }
 </script>
 
