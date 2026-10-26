@@ -146,7 +146,7 @@
     #input-main-row {
       display: flex;
       padding: 8px;
-      align-items: flex-end; /* FIXED: Anchors buttons to bottom during multi-line growth */
+      align-items: flex-end;
     }
 
     /* CHATGPT-STYLE FLOATING THINKING POPOVER CARD */
@@ -260,7 +260,7 @@
       cursor: pointer;
       font-weight: bold;
       font-size: 18px;
-      height: 38px; /* FIXED: Fixed height */
+      height: 38px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -295,7 +295,7 @@
       border-radius: 4px;
       cursor: pointer;
       font-weight: bold;
-      height: 38px; /* FIXED: Fixed height */
+      height: 38px;
       transition: background 0.2s ease;
     }
 
@@ -308,7 +308,7 @@
       border-radius: 4px;
       cursor: pointer;
       font-weight: bold;
-      height: 38px; /* FIXED: Fixed height */
+      height: 38px;
       transition: background 0.2s;
     }
 
@@ -786,7 +786,7 @@
       </div>
 
       <button id="send-btn" onclick="sendMessage()">Send</button>
-      <button id="save-btn" onclick="saveChatHistory()" title="Save Chat History">💾 Save</button>
+      <button id="save-btn" onclick="exportMarkdownChat()" title="Save Chat History (.md)">💾 Save</button>
     </div> 
   </div>
 
@@ -1012,22 +1012,25 @@
     updateThemeUI(isDark, true);
   }
 
-  function saveChatHistory() {
+  function exportMarkdownChat() {
     const chatLog = conversationHistory
       .filter(msg => msg.role !== 'system')
-      .map(msg => `${msg.role === 'user' ? 'You' : 'AI'}: ${msg.content}`)
-      .join('\n\n------------------------------------\n\n');
+      .map(msg => {
+        const speaker = msg.role === 'user' ? '### 👤 You' : '### 🤖 AI';
+        return `${speaker}\n\n${msg.content}`;
+      })
+      .join('\n\n---\n\n');
 
     if (!chatLog) {
       alert("No chat history to save yet!");
       return;
     }
 
-    const blob = new Blob([chatLog], { type: 'text/plain;charset=utf-8' });
+    const blob = new Blob([chatLog], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `chat-history-${new Date().toISOString().slice(0, 10)}.txt`;
+    link.download = `chat-history-${new Date().toISOString().slice(0, 10)}.md`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1121,7 +1124,7 @@
     document.getElementById('file-badge-container').innerHTML = '';
 
     userInput.value = '';
-    userInput.style.height = 'auto'; // FIXED: Reset textarea height after sending
+    userInput.style.height = 'auto';
     userInput.disabled = true;
 
     setGeneratingState(true);
@@ -1282,7 +1285,7 @@
     conversationHistory.length = 0;
     conversationHistory.push(systemPrompt);
     messagesContainer.innerHTML = '<div class="msg bot flow-block">Hello! Ask me anything!</div>';
-    userInput.style.height = 'auto'; // FIXED: Reset textarea height on clear
+    userInput.style.height = 'auto';
     if (attachedFileName) { removeAttachedFile(); }
     userInput.focus();
   }
