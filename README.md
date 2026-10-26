@@ -1,6 +1,6 @@
 # AI Chat Widget for Google Sites
 
-A lightweight, feature-packed, single-file AI chat application designed to embed seamlessly into Google Sites or run as a standalone web app. Built with vanilla HTML, CSS, and JavaScript, it features rich text formatting, math rendering, and customizable AI personas.
+A lightweight, feature-packed, single-file AI chat application designed to embed seamlessly into Google Sites or run as a standalone web app. Built with vanilla HTML, CSS, and JavaScript, it features rich text formatting, math rendering, and customizable AI personas. Also, I suggest to download the html file and test it through google chrome or ms edge so all features should be working.
 
 ## Features
 
